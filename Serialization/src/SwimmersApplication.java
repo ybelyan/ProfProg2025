@@ -1,30 +1,32 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class SwimmersApplication {
     public static final String FILENAME = "net.txt";
     public static final int NET_SIZE = 10;
+    private static final Scanner SCANNER = new Scanner(System.in);
 
     public static void main(String[] args) {
-        /*Sea sea = new Sea();
-        sea.giveFish();
+        try(ScheduledExecutorService service = Executors.newScheduledThreadPool(3)) {
+            service.scheduleAtFixedRate(new Sea(), 0, 5, TimeUnit.SECONDS);
+            service.scheduleAtFixedRate(new Fisherman(), 4, 10, TimeUnit.SECONDS);
+            service.scheduleAtFixedRate(new Fisherman(), 9, 10, TimeUnit.SECONDS);
+            while(!"q".equals(SCANNER.next())){
 
-        Fisherman fisherman = new Fisherman();
-        fisherman.catchFish();*/
+            }
+            service.shutdown();
+        }
 
-        List<Swimmer> swimmers = new ArrayList<>();
+        /*List<Swimmer> swimmers = new ArrayList<>();
         for (int i = 0; i < NET_SIZE; i++) {
             swimmers.add(SwimmerFactory.getSwimmer());
         }
 
-        List<Can<Swimmer>> cans = swimmers.stream()
-                .peek(System.out::println)
-                .filter(s -> SwimmerType.FISH.equals(s.getType()))
-                .filter(s -> s.getWeight() > 500)
-                .map(Swimmer::cookCannedSwimmer)
-                .toList();
-
-        /*List<Swimmer> fishes = new ArrayList<>();
+        List<Swimmer> fishes = new ArrayList<>();
         for (Swimmer swimmer : swimmers) {
             System.out.println(swimmer);
             if (SwimmerType.FISH.equals(swimmer.getType())) {
@@ -38,10 +40,11 @@ public class SwimmersApplication {
         for(Swimmer fish : fishes) {
             Can<Swimmer> can = fish.cookCannedSwimmer();
             cans.add(can);
-        }*/
+        }
 
-        System.out.println("Рыбные консервы: " + cans.size());
-
+        System.out.println("Рыбные консервы: " + cans.size());*/
 
     }
+
+
 }
