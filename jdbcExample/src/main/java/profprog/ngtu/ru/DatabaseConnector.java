@@ -9,6 +9,19 @@ public class DatabaseConnector {
     private Statement statement;
     private PreparedStatement preparedStatement;
 
+    public static void main(String[] args) {
+        List<String> list = List.of("набор", "строк", "произвольной", "длины");
+        list.stream().filter(s -> {
+            System.out.println("filter: " + s);
+            return s.length() <= 5;
+        }).map( s1 -> {
+            System.out.println("map: " + s1);
+            return s1.toUpperCase();
+        }).forEach(x -> {
+            System.out.println("forЕach: " + x);
+        });
+    }
+
     private DatabaseConnector() {
         try {
             connection
