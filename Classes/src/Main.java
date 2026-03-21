@@ -1,3 +1,4 @@
+import work.Developer;
 import work.Manager;
 import work.Tester;
 
@@ -17,6 +18,10 @@ public class Main {
         tester.testCode();
         System.out.println("Bonus: " + tester.calculateBonus());
 
+        Developer developer = new Developer("Stepanov", "Stepan", "developer", 2500);
+        System.out.println(developer.getJobTitle());
+        developer.devCode();
+        System.out.println("Bonus: " + developer.calculateBonus());
 
     }
 }
