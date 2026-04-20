@@ -1,0 +1,160 @@
+1. Create new maven project simple-http-server
+2. Build jar
+3. Install VirtualBox, download Ubuntu iso, add Ubuntu guest machine
+4.Open SFTP
+- VirtualBox VM configuration -Network - Network Bridge to assign IP address for guest machine
+- On ubuntu
+sudo apt update
+sudo apt install openssh-server -y
+sudo systemctl status ssh
+sudo systemctl start ssh
+- ip addr
+5. Add non root singular user
+sudo adduser app
+
+6. Add application folders as ubuntu user owned only by app user
+sudo mkdir /opt/simple-http-server // executables of service
+sudo mkdir /etc/opt/simple-http-server // config files
+sudo mv /home/app/simple-http-server-1.0.jar /opt/simple-http-server
+sudo chown -R app:app /opt/simple-http-server /etc/opt/simple-http-server
+sudo chmod 744 /opt/simple-http-server /etc/opt/simple-http-server
+
+7. Install Java to ubuntu server as ubuntu user
+java -version
+sudo apt install openjdk-21-jre-headless // without GUI support (AWT and Swing)
+
+sudo vi /etc/enviroment (Insert Ctrl+: wq) add JAVA_HOME="/usr/bin/java"
+
+8. Connect to server via SSH in Putty as app user and Run application 
+java -jar /opt/simple-http-server/simple-http-server.jar
+9. Manifest
+Add to pom.xml
+
+<build>
+        <plugins>
+            <plugin>
+                <!-- Build an executable JAR -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.5.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>lib/</classpathPrefix>
+                            <mainClass>org.example.SimpleHttpServer</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+	
+	
+10. Coding (if needed)
+locale //view
+
+Add the following lines to your ~/.bashrc file to ensure all new sessions use UTF-8:
+
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+
+Apply the changes by running source ~/.bashrc
+
+sudo locale-gen ru_RU.UTF-8
+sudo update-locale LANG=ru_RU.UTF-8
+
+11. Send GET request using Postman to http://192.168.1.48:8080/api
+
+12. Define SystemD service
+create a unit file that defines the executables and additional instructions in /etc/systemd/system
+
+sudo touch /etc/systemd/system/simple-http-server.service
+
+[Unit]
+Description=Simple Http Server Application
+After=syslog.target
+
+[Service]
+Type=simple
+User=app
+#EnvironmentFile=/etc/opt/simple-http-server/simple-http-server.config
+ExecStart=/usr/bin/java -jar /opt/simple-http-server/simple-http-server.jar
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+13. Enabling and Starting our Service (as ubuntu user)
+sudo systemctl enable simple-http-server.service //Enabling the service is what tells to automatically start this service when the machine first boots up. 
+This will ensure that if the server restarts for any reason it will automatically restart our API!
+
+sudo systemctl start simple-http-server.service
+sudo systemctl stop simple-http-server.service
+sudo systemctl daemon-reload // reload changed unit file
+
+14. Troubleshooting our Service ( as app user)
+journalctl -fu simple-http-server.service
+
+-u: the unit file we are accessing
+-f: print out the last 10 lines of the journal, update as new logs come in
+
+15. Nginx
+sudo apt install nginx
+sudo vi /etc/nginx/sites-available/simple-http-server:
+
+
+
+  server {
+    listen  *:80;
+
+    location / {
+    proxy_pass http://localhost:8080;
+    }
+  }
+
+sudo ln -s /etc/nginx/sites-available/simple-http-server /etc/nginx/sites-enabled/
+sudo rm /etc/nginx/sites-enabled/default
+
+sudo nginx -t
+sudo systemctl restart nginx
+
+16. Firewall
+Воспользуемся стандартным брандмауэром UFW (Uncomplicated Firewall). 
+По умолчанию он разрешает все подключения изнутри наружу и запрещает все подключения снаружи к серверу. 
+
+sudo apt install ufw
+# Важно! Разрешаем ssh-подключения!
+sudo ufw allow ssh
+# разрешаем http и https протоколы (порты 80 и 443)
+sudo ufw allow http
+sudo ufw allow https
+
+sudo ufw enable
+После активации брандмауэра все запрещённые порты окажутся недоступны!
+
+17. Logging
+sudo mkdir /etc/opt/simple-http-server /var/log/simple-http-server
+sudo chown -R app:app /etc/opt/simple-http-server /var/log/simple-http-server
+
+Copy logback.xml to /etc/opt/simple-http-server and change the log file path to /var/log/simple-http-server/app.log
+
+Edit unit file /etc/systemd/system/simple-http-server.service to add to ExecStart command the parameter
+-Dlogback.configurationFile=/etc/opt/simple-http-server/logback.xml
+
+restart service
+
+sudo systemctl daemon-reload
+sudo systemctl restart simple-http-server.service
+
+18. Run http traffic
+#!/bin/bash
+
+for i in {1..150}
+do
+    result=$(curl -s curl http://192.168.1.48/api)
+    echo "request $i: $result"
+    # Sleep for 50 milliseconds (0.05 seconds)
+    sleep 1
+done
+

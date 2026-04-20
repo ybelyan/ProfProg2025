@@ -1,0 +1,12 @@
+[Unit]
+Description=Simple Http Server Application
+After=syslog.target
+
+[Service]
+Type=simple
+User=app
+ExecStart=/usr/bin/java -Xmx128m -Dlogback.configurationFile=/etc/opt/simple-http-server/logback.xml -jar /opt/simple-http-server/simple-http-server-1.0.jar
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
